@@ -1,11 +1,11 @@
 const fs = require("fs");
-const request = require("request-promise");
+const fetch = require("node-fetch");
 
-const queryAnilist = (offset) => request(
+const queryAnilist = (offset) => fetch(
+  "http://127.0.0.1:9200/anilist/anime/_search",
   {
     method: "POST",
-    uri: "http://127.0.0.1:9200/anilist/anime/_search",
-    body: {
+    body: JSON.stringify({
       query: {bool: {must: [{match_all: {}}]}},
       _source: [
         "id",
@@ -15,10 +15,10 @@ const queryAnilist = (offset) => request(
       search_after: [offset.toString()],
       from: 0,
       size: 10000
-    },
-    json: true // Automatically stringifies the body to JSON
+    }),
+    headers: { "Content-Type": "application/json" }
   }
-);
+).then((res) => res.json());
 
 (async () => {
   console.log("Getting anilist-mal data");
@@ -35,8 +35,8 @@ const queryAnilist = (offset) => request(
   console.log(`Found ${ANILIST_MAL.length} anilist-mal entries`);
 
   console.log("Downloading manami data");
-  const manamiData = await request("https://github.com/manami-project/anime-offline-database/raw/master/anime-offline-database.json");
-  const ANIDB_MAL_ANN_ANILIST = JSON.parse(manamiData).data
+  const manamiData = await fetch("https://github.com/manami-project/anime-offline-database/raw/master/anime-offline-database.json").then((res) => res.json());
+  const ANIDB_MAL_ANN_ANILIST = manamiData.data
     .map((each) => each.sources)
     .map((urlList) => {
       const entry = {};

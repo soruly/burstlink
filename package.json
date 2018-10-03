@@ -4,8 +4,7 @@
   "description": "",
   "main": "index.js",
   "dependencies": {
-    "request": "^2.88.0",
-    "request-promise": "^4.2.2"
+    "node-fetch": "^2.2.0"
   },
   "devDependencies": {},
   "scripts": {
