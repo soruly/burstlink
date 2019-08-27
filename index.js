@@ -42,7 +42,7 @@ const queryAnilist = (offset) => fetch(
       const entry = {};
       urlList.forEach((url) => {
         if (url.indexOf("https://anidb.net/") === 0) {
-          entry.anidb = parseInt(url.replace("https://anidb.net/a", ""), 10);
+          entry.anidb = parseInt(url.replace("https://anidb.net/anime/", ""), 10);
         } else if (url.indexOf("https://myanimelist.net/anime/") === 0) {
           entry.mal = parseInt(url.replace("https://myanimelist.net/anime/", ""), 10);
           if (ANILIST_MAL.some((e) => e.mal === entry.mal)) {
