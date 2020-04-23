@@ -6,9 +6,13 @@
   "dependencies": {
     "node-fetch": "^2.6.0"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "prettier": "^2.0.5"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "prettier": "prettier",
+    "format": "prettier --write \"**/*.js\"",
+    "test": "prettier --check \"**/*.js\""
   },
   "repository": {
     "type": "git",
