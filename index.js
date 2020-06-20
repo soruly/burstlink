@@ -37,30 +37,15 @@ const queryAnilist = (offset) =>
       const entry = {};
       urlList.forEach((url) => {
         if (url.indexOf("https://anidb.net/") === 0) {
-          entry.anidb = parseInt(
-            url.replace("https://anidb.net/anime/", ""),
-            10
-          );
+          entry.anidb = parseInt(url.replace("https://anidb.net/anime/", ""), 10);
         } else if (url.indexOf("https://myanimelist.net/anime/") === 0) {
-          entry.mal = parseInt(
-            url.replace("https://myanimelist.net/anime/", ""),
-            10
-          );
+          entry.mal = parseInt(url.replace("https://myanimelist.net/anime/", ""), 10);
           if (ANILIST_MAL.some((e) => e.mal === entry.mal)) {
-            entry.anilist = ANILIST_MAL.filter(
-              (e) => e.mal === entry.mal
-            )[0].anilist;
+            entry.anilist = ANILIST_MAL.filter((e) => e.mal === entry.mal)[0].anilist;
           }
-        } else if (
-          url.indexOf(
-            "https://animenewsnetwork.com/encyclopedia/anime.php?id="
-          ) === 0
-        ) {
+        } else if (url.indexOf("https://animenewsnetwork.com/encyclopedia/anime.php?id=") === 0) {
           entry.ann = parseInt(
-            url.replace(
-              "https://animenewsnetwork.com/encyclopedia/anime.php?id=",
-              ""
-            ),
+            url.replace("https://animenewsnetwork.com/encyclopedia/anime.php?id=", ""),
             10
           );
         } else {
@@ -72,8 +57,5 @@ const queryAnilist = (offset) =>
 
   console.log(`Merged into ${ANIDB_MAL_ANN_ANILIST.length} entries`);
   console.log("Writing merged output");
-  fs.writeFileSync(
-    "burstlink.json",
-    JSON.stringify(ANIDB_MAL_ANN_ANILIST, null, 2)
-  );
+  fs.writeFileSync("burstlink.json", JSON.stringify(ANIDB_MAL_ANN_ANILIST, null, 2));
 })();
