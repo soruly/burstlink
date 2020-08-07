@@ -10,37 +10,14 @@ interface Anilist {
   sort: number[];
 }
 
-enum SEASON {
-  SPRING = "SPRING",
-  SUMMER = "SUMMER",
-  FALL = "FALL",
-  WINTER = "WINTER",
-  UNDEFINED = "UNDEFINED",
-}
-
-enum TYPE {
-  TV = "TV",
-  Movie = "MOVIE",
-  OVA = "OVA",
-  ONA = "ONA",
-  Special = "Special",
-}
-
-enum STATUS {
-  FINISHED = "FINISHED",
-  CURRENTLY = "CURRENTLY",
-  UPCOMING = "UPCOMING",
-  UNKNOWN = "UNKNOWN",
-}
-
 interface Manami {
   sources: string[];
   title: string;
-  type: TYPE;
+  type: "TV" | "MOVIE" | "OVA" | "ONA" | "Special";
   episodes: number;
-  status: STATUS;
+  status: "FINISHED" | "CURRENTLY" | "UPCOMING" | "UNKNOWN";
   animeSeason: {
-    season: SEASON;
+    season: "SPRING" | "SUMMER" | "FALL" | "WINTER" | "UNDEFINED";
     year?: number;
   };
   picture: string;
@@ -89,23 +66,22 @@ const manamiData = await fetch(
 ).then((res) => res.json());
 const ANIDB_MAL_ANN_ANILIST = manamiData.data.map((each: Manami) => {
   const entry: Entry = {};
-  each.sources.forEach((url) => {
-    if (url.indexOf("https://anidb.net/") === 0) {
-      entry.anidb = parseInt(url.replace("https://anidb.net/anime/", ""), 10);
-    } else if (url.indexOf("https://myanimelist.net/anime/") === 0) {
-      entry.mal = parseInt(url.replace("https://myanimelist.net/anime/", ""), 10);
+  for (const url of each.sources) {
+    if (url.startsWith("https://anidb.net/")) {
+      entry.anidb = Number(url.replace("https://anidb.net/anime/", ""));
+    } else if (url.startsWith("https://myanimelist.net/anime/")) {
+      entry.mal = Number(url.replace("https://myanimelist.net/anime/", ""));
       if (ANILIST_MAL.some((e) => e.mal === entry.mal)) {
         entry.anilist = ANILIST_MAL.filter((e) => e.mal === entry.mal)[0].anilist;
       }
-    } else if (url.indexOf("https://animenewsnetwork.com/encyclopedia/anime.php?id=") === 0) {
-      entry.ann = parseInt(
-        url.replace("https://animenewsnetwork.com/encyclopedia/anime.php?id=", ""),
-        10
+    } else if (url.startsWith("https://animenewsnetwork.com/encyclopedia/anime.php?id=")) {
+      entry.ann = Number(
+        url.replace("https://animenewsnetwork.com/encyclopedia/anime.php?id=", "")
       );
     } else {
       console.log(url);
     }
-  });
+  }
   return entry;
 });
 
