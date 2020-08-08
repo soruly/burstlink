@@ -8,8 +8,10 @@ To get more anime info you have to query those database yourself. It only store 
 e.g. To lookup IDs using MyAnimeList ID:
 
 ```javascript
-const db = await fetch("https://raw.githubusercontent.com/soruly/burstlink/master/burstlink.json").then(res => res.json());
-console.log(db.find(entry => entry.mal === 37207));
+const db = await fetch(
+  "https://raw.githubusercontent.com/soruly/burstlink/master/burstlink.json"
+).then((res) => res.json());
+console.log(db.find((entry) => entry.mal === 37207));
 ```
 
 ```
@@ -28,5 +30,5 @@ This repo is automatically kept up-to-date with [Anilist](https://anilist.co/) a
 To update the json file, git clone this repo, [Install deno](https://deno.land/manual/getting_started/installation), and then
 
 ```
-deno run --allow-net --allow-write index.ts
+deno run --allow-net --allow-read --allow-write index.ts
 ```
