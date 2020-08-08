@@ -1,13 +1,6 @@
 interface Anilist {
-  _index: string;
-  _type: string;
-  _id: string;
-  _score: null;
-  _source: {
-    idMal: number;
-    id: number;
-  };
-  sort: number[];
+  idMal: number;
+  id: number;
 }
 
 interface Manami {
@@ -34,52 +27,94 @@ interface Entry {
   ann?: number;
 }
 
-const queryAnilist = (offset: number) =>
-  fetch("http://127.0.0.1:9200/anilist/anime/_search", {
-    method: "POST",
-    body: JSON.stringify({
-      query: { bool: { must: [{ match_all: {} }] } },
-      _source: ["id", "idMal"],
-      sort: [{ id: "asc" }],
-      search_after: [offset.toString()],
-      from: 0,
-      size: 10000,
-    }),
-    headers: { "Content-Type": "application/json" },
-  }).then((res) => res.json());
+console.log("Getting anilist data...");
 
-console.log("Getting anilist-mal data");
-const [...result] = await Promise.all([queryAnilist(0), queryAnilist(10000)]);
+const getLastPage: () => Promise<number> = () =>
+  new Promise((resolve) => {
+    const worker = new Worker(new URL("worker.ts", import.meta.url).href, { type: "module" });
+    worker.postMessage({ page: 1 });
+    worker.onmessage = ({ data }: MessageEvent) => {
+      resolve(data.Page.pageInfo.lastPage);
+      worker.terminate();
+    };
+  });
+const lastPage = await getLastPage();
 
-const ANILIST_MAL = []
-  .concat(...result.map((each) => each.hits.hits))
-  .map((each: Anilist) => ({
-    anilist: each._source.id,
-    mal: each._source.idMal,
-  }))
-  .filter((each) => each.anilist && each.mal);
-console.log(`Found ${ANILIST_MAL.length} anilist-mal entries`);
+const pageList = Array.from(Array(lastPage), (_, i) => i + 1);
+
+const maxWorkers = 4;
+
+const workerList = Array.from(
+  Array(lastPage > maxWorkers ? maxWorkers : lastPage),
+  (_, i) => i + 1
+).map((i) => new Worker(new URL("worker.ts", import.meta.url).href, { type: "module" }));
+
+const getAnilist: () => Promise<Anilist[]> = () =>
+  new Promise((resolve) => {
+    let list: Anilist[] = [];
+
+    for (const worker of workerList) {
+      Deno.stdout.writeSync(new Uint8Array([0x0d]));
+      Deno.stdout.writeSync(
+        new Uint8Array(
+          new TextEncoder().encode(
+            `Fetching Anilist page: ${lastPage - pageList.length}/${lastPage}`
+          )
+        )
+      );
+      worker.postMessage({ page: pageList.shift() });
+      worker.onmessage = ({ data }: MessageEvent) => {
+        // list = data ? [...list, ...data.Page.media] : list;
+        list = [...list, ...data.Page.media];
+        if (pageList.length) {
+          Deno.stdout.writeSync(new Uint8Array([0x0d]));
+          Deno.stdout.writeSync(
+            new Uint8Array(
+              new TextEncoder().encode(
+                `Fetching Anilist page: ${lastPage - pageList.length}/${lastPage}`
+              )
+            )
+          );
+          worker.postMessage({ page: pageList.shift() });
+        } else {
+          worker.terminate();
+          workerList.splice(
+            workerList.findIndex((e) => e === worker),
+            1
+          );
+          if (!workerList.length) {
+            resolve(list.sort((a, b) => a.id - b.id));
+          }
+        }
+      };
+    }
+  });
+
+const ANILIST_MAL: Anilist[] = await getAnilist();
+
+console.log();
+console.log(`Found ${ANILIST_MAL.length} Anilist entries`);
 
 console.log("Downloading manami data");
+
 const manamiData = await fetch(
   "https://github.com/manami-project/anime-offline-database/raw/master/anime-offline-database.json"
 ).then((res) => res.json());
-const ANIDB_MAL_ANN_ANILIST = manamiData.data.map((each: Manami) => {
+
+const ANIDB_MAL_ANN_ANILIST: Entry[] = manamiData.data.map((each: Manami) => {
   const entry: Entry = {};
   for (const url of each.sources) {
     if (url.startsWith("https://anidb.net/")) {
       entry.anidb = Number(url.replace("https://anidb.net/anime/", ""));
     } else if (url.startsWith("https://myanimelist.net/anime/")) {
       entry.mal = Number(url.replace("https://myanimelist.net/anime/", ""));
-      if (ANILIST_MAL.some((e) => e.mal === entry.mal)) {
-        entry.anilist = ANILIST_MAL.filter((e) => e.mal === entry.mal)[0].anilist;
+      if (ANILIST_MAL.some((e) => e.idMal === entry.mal)) {
+        entry.anilist = ANILIST_MAL.filter((e) => e.idMal === entry.mal)[0].id;
       }
     } else if (url.startsWith("https://animenewsnetwork.com/encyclopedia/anime.php?id=")) {
       entry.ann = Number(
         url.replace("https://animenewsnetwork.com/encyclopedia/anime.php?id=", "")
       );
-    } else {
-      console.log(url);
     }
   }
   return entry;
