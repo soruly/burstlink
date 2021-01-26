@@ -6,7 +6,8 @@ const handler = async (message: MessageEvent) => {
         page: message.data.page,
         perPage: 50,
       },
-      query: `query ($page: Int = 1, $perPage: Int = 1, $id: Int, $type: MediaType = ANIME) {
+      query:
+        `query ($page: Int = 1, $perPage: Int = 1, $id: Int, $type: MediaType = ANIME) {
             Page(page: $page, perPage: $perPage) {
               pageInfo {
                 total
@@ -26,7 +27,9 @@ const handler = async (message: MessageEvent) => {
   }).then((res) => res.json());
   if (response.data) {
     self.postMessage(response.data);
-  } else if (response.errors.some(({ status }: { status: number }) => status === 429)) {
+  } else if (
+    response.errors.some(({ status }: { status: number }) => status === 429)
+  ) {
     handler(message);
   } else {
     console.log();

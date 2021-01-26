@@ -31,7 +31,9 @@ console.log("Getting anilist data...");
 
 const getLastPage: () => Promise<number> = () =>
   new Promise((resolve) => {
-    const worker = new Worker(new URL("worker.ts", import.meta.url).href, { type: "module" });
+    const worker = new Worker(new URL("worker.ts", import.meta.url).href, {
+      type: "module",
+    });
     worker.postMessage({ page: 1 });
     worker.onmessage = ({ data }: MessageEvent) => {
       resolve(data.Page.pageInfo.lastPage);
@@ -46,8 +48,10 @@ const maxWorkers = 4;
 
 const workerList = Array.from(
   Array(lastPage > maxWorkers ? maxWorkers : lastPage),
-  (_, i) => i + 1
-).map((i) => new Worker(new URL("worker.ts", import.meta.url).href, { type: "module" }));
+  (_, i) => i + 1,
+).map((i) =>
+  new Worker(new URL("worker.ts", import.meta.url).href, { type: "module" })
+);
 
 const getAnilist: () => Promise<Anilist[]> = () =>
   new Promise((resolve) => {
@@ -58,9 +62,9 @@ const getAnilist: () => Promise<Anilist[]> = () =>
       Deno.stdout.writeSync(
         new Uint8Array(
           new TextEncoder().encode(
-            `Fetching Anilist page: ${lastPage - pageList.length}/${lastPage}`
-          )
-        )
+            `Fetching Anilist page: ${lastPage - pageList.length}/${lastPage}`,
+          ),
+        ),
       );
       worker.postMessage({ page: pageList.shift() });
       worker.onmessage = ({ data }: MessageEvent) => {
@@ -71,16 +75,17 @@ const getAnilist: () => Promise<Anilist[]> = () =>
           Deno.stdout.writeSync(
             new Uint8Array(
               new TextEncoder().encode(
-                `Fetching Anilist page: ${lastPage - pageList.length}/${lastPage}`
-              )
-            )
+                `Fetching Anilist page: ${lastPage -
+                  pageList.length}/${lastPage}`,
+              ),
+            ),
           );
           worker.postMessage({ page: pageList.shift() });
         } else {
           worker.terminate();
           workerList.splice(
             workerList.findIndex((e) => e === worker),
-            1
+            1,
           );
           if (!workerList.length) {
             resolve(list.sort((a, b) => a.id - b.id));
@@ -98,7 +103,7 @@ console.log(`Found ${ANILIST_MAL.length} Anilist entries`);
 console.log("Downloading manami data");
 
 const manamiData = await fetch(
-  "https://github.com/manami-project/anime-offline-database/raw/master/anime-offline-database.json"
+  "https://github.com/manami-project/anime-offline-database/raw/master/anime-offline-database.json",
 ).then((res) => res.json());
 
 const ANIDB_MAL_ANN_ANILIST: Entry[] = manamiData.data.map((each: Manami) => {
@@ -111,9 +116,14 @@ const ANIDB_MAL_ANN_ANILIST: Entry[] = manamiData.data.map((each: Manami) => {
       if (ANILIST_MAL.some((e) => e.idMal === entry.mal)) {
         entry.anilist = ANILIST_MAL.filter((e) => e.idMal === entry.mal)[0].id;
       }
-    } else if (url.startsWith("https://animenewsnetwork.com/encyclopedia/anime.php?id=")) {
+    } else if (
+      url.startsWith("https://animenewsnetwork.com/encyclopedia/anime.php?id=")
+    ) {
       entry.ann = Number(
-        url.replace("https://animenewsnetwork.com/encyclopedia/anime.php?id=", "")
+        url.replace(
+          "https://animenewsnetwork.com/encyclopedia/anime.php?id=",
+          "",
+        ),
       );
     }
   }
@@ -122,4 +132,7 @@ const ANIDB_MAL_ANN_ANILIST: Entry[] = manamiData.data.map((each: Manami) => {
 
 console.log(`Merged into ${ANIDB_MAL_ANN_ANILIST.length} entries`);
 console.log("Writing merged output");
-Deno.writeTextFileSync("burstlink.json", JSON.stringify(ANIDB_MAL_ANN_ANILIST, null, 2));
+Deno.writeTextFileSync(
+  "burstlink.json",
+  JSON.stringify(ANIDB_MAL_ANN_ANILIST, null, 2),
+);
