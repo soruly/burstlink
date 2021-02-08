@@ -1,6 +1,6 @@
 # burstlink
 
-[![License](https://img.shields.io/github/license/soruly/aniep.svg?style=flat-square)](https://github.com/soruly/aniep/blob/master/LICENSE)
+[![License](https://img.shields.io/github/license/soruly/burstlink.svg?style=flat-square)](https://github.com/soruly/burstlink/blob/master/LICENSE)
 
 This repo has a json file that helps to look up anime IDs from different Anime
 DBs. To get more anime info you have to query those database yourself. It only
